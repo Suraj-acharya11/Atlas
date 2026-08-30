@@ -1,0 +1,44 @@
+export type Goal = { _id: string; title: string; description?: string; status: string; createdAt?: string };
+export type Task = { _id: string; title: string; status: 'todo'|'in_progress'|'paused'|'completed'|'cancelled'; deadline?: string | null; projectId?: string | null };
+export type Mission = { _id: string; date: string; blocks?: Array<{ title?: string; taskId?: string; kind?: string }>; status?: string };
+export type Decision = { _id: string; id?: string; topCandidateId?: string; topExplanation?: string; priorityList?: Array<{ candidateId: string; title: string; score?: number; explanation?: string; factors?: Array<{ key: string; rawValue: number; weightedValue: number }> }> };
+export type ReflectionValue = 'underestimated' | 'accurate' | 'overestimated';
+export type Reflection = {
+  _id: string;
+  userId?: string;
+  taskId: string;
+  missionId: string;
+  executionRecordId: string;
+  timeEstimate: ReflectionValue;
+  difficulty: ReflectionValue;
+  progress: ReflectionValue;
+  planAdherence: 'full' | 'partial' | 'none';
+  cause: string;
+  createdAt: string;
+};
+export type ExecutionStatus = 'started' | 'paused' | 'resumed' | 'completed' | 'partial' | 'abandoned';
+export type ExecutionRecord = {
+  _id: string;
+  userId?: string;
+  taskId: string;
+  missionId: string;
+  status: ExecutionStatus;
+  startedAt: string;
+  endedAt: string | null;
+  actualDurationMinutes: number;
+  progressPercent: number;
+  createdAt?: string;
+};
+export type DocumentStatus = 'active' | 'referenced' | 'archived' | 'deleted';
+export type DocumentRecord = {
+  _id: string;
+  userId?: string;
+  filename: string;
+  mimeType: 'application/pdf' | 'text/plain' | string;
+  storagePath?: string;
+  status: DocumentStatus;
+  uploadedAt: string;
+  lastUsedAt?: string | null;
+  pageCount: number | null;
+  extractedText: string | null;
+};

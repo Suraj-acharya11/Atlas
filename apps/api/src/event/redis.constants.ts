@@ -1,0 +1,1 @@
+export const REDIS_CLIENT = 'ATLAS_REDIS_CLIENT';

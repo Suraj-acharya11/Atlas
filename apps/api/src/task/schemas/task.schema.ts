@@ -1,0 +1,4 @@
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose'; import { HydratedDocument, Types } from 'mongoose';
+export type TaskDocument=HydratedDocument<Task>;
+@Schema({collection:'tasks',versionKey:false}) export class Task { @Prop({type:Types.ObjectId,required:true,index:true}) userId!:Types.ObjectId; @Prop({type:Types.ObjectId,ref:'Project',default:null}) projectId!:Types.ObjectId|null; @Prop({required:true,trim:true}) title!:string; @Prop({required:true,enum:['todo','in_progress','paused','completed','cancelled'],default:'todo'}) status!:string; @Prop({type:Date,default:null}) deadline!:Date|null; @Prop({required:true,default:Date.now}) createdAt!:Date; }
+export const TaskSchema=SchemaFactory.createForClass(Task); TaskSchema.index({userId:1,status:1,deadline:1});

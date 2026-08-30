@@ -1,0 +1,12 @@
+node_modules
+**/node_modules
+dist
+**/dist
+.git
+.codex
+.pnpm-store
+.tmp-ui-design-assets
+.tmp-ui-design-render
+.env
+coverage
+*.log

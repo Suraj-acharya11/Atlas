@@ -1,0 +1,1 @@
+export const DECISION_FACTORS = 'DECISION_FACTORS';

@@ -1,0 +1,9 @@
+import { Injectable, NotFoundException } from '@nestjs/common'; import { InjectModel } from '@nestjs/mongoose'; import { Model, Types } from 'mongoose'; import { EventService } from '../event/event.service'; import { CreateGoalDto } from './dto/create-goal.dto'; import { UpdateGoalDto } from './dto/update-goal.dto'; import { Goal, GoalDocument } from './schemas/goal.schema';
+@Injectable() export class GoalService { constructor(@InjectModel(Goal.name) private readonly model:Model<GoalDocument>,private readonly events:EventService){}
+  async create(userId:string,input:CreateGoalDto){const goal=await this.model.create({...input,userId:new Types.ObjectId(userId)});await this.events.record({type:'GOAL_CREATED',userId,payload:{goalId:goal.id}});return goal.toObject();}
+  async findAll(userId:string){return this.model.find({userId:new Types.ObjectId(userId)}).sort({createdAt:-1}).lean().exec();}
+  async findOwnedOrThrow(userId:string,id:string){const goal=await this.model.findOne({_id:id,userId:new Types.ObjectId(userId)}).lean().exec();if(!goal)throw new NotFoundException('Goal not found');return goal;}
+  async update(userId:string,id:string,input:UpdateGoalDto){const goal=await this.model.findOneAndUpdate({_id:id,userId:new Types.ObjectId(userId)},{$set:input},{new:true,runValidators:true}).lean().exec();if(!goal)throw new NotFoundException('Goal not found');const type=input.status==='completed'?'GOAL_COMPLETED':input.status==='archived'?'GOAL_ARCHIVED':'GOAL_UPDATED';await this.events.record({type,userId,payload:{goalId:id,fields:Object.keys(input)}});return goal;}
+  async archive(userId:string,id:string){return this.update(userId,id,{status:'archived'});}
+  async assertAllOwned(userId:string,ids:string[]){if(!ids.length)return;const count=await this.model.countDocuments({_id:{$in:ids},userId:new Types.ObjectId(userId)});if(count!==ids.length)throw new NotFoundException('One or more goals not found');}
+}
