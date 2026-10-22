@@ -26,7 +26,7 @@ export function ReflectionIntro() {
     <Text style={styles.label}>Backend-generated reflection</Text>
     <Text style={[styles.body, { fontSize: 18, fontWeight: '800', marginTop: 10 }]}>Reflection follows execution</Text>
     <Text style={[styles.muted, { marginTop: 6 }]}>ATLAS creates learning signals after a focus execution is completed, marked partial, or abandoned. User-entered reflection text is not supported yet.</Text>
-    <Pressable style={[styles.button, { marginTop: 14 }]} onPress={() => router.push('/(tabs)/dashboard')}><Text style={styles.buttonText}>Go to Focus</Text></Pressable>
+    <Pressable style={[styles.button, { marginTop: 14 }]} onPress={() => router.push('/timetable')}><Text style={styles.buttonText}>Go to Today’s Mission & Focus</Text></Pressable>
   </View>;
 }
 

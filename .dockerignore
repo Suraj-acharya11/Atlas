@@ -1,5 +1,26 @@
 node_modules
 **/node_modules
+node_modules.prepathfix.failed
+
+# Mobile/native build output is not required for the API image.
+apps/mobile/android
+apps/mobile/ios
+apps/mobile/.expo
+apps/mobile/dist
+apps/mobile/coverage
+apps/mobile/design-reference
+**/.gradle
+**/build
+**/.cxx
+
+# Local tooling and editor state.
+.idea
+.vscode
+.vs
+*.iml
+.DS_Store
+Thumbs.db
+
 dist
 **/dist
 .git

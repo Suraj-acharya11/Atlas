@@ -1,8 +1,45 @@
-node_modules/
-dist/
-.expo/
+
+# Environment secrets
 .env
-.tmp-*/
-coverage/
-android/
-ios/
+.env.*
+!.env.example
+
+# Dependencies and generated output
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+
+# Local troubleshooting and tool data
+node_modules.prepathfix.failed/
+.postman/
+postman/
+scratch/
+.expo/
+**/.expo/
+
+# Local load-test output
+ATLAS-Load-Test-Results.csv
+
+# Expo generated exports and temporary assets
+.atlas-mobile-export-diagnostic/
+.atlas-mobile-export/
+.atlas-runtime-export/
+.expo-export-check/
+.tmp-ui-design-assets/
+
+# Generated test reports and results
+mobile-e2e/mochawesome-report/
+mobile-e2e/reports/
+ATLAS-Load-Test-Results.csv
+
+# Local Android signing/debug key
+apps/mobile/android/app/debug.keystore
+# Alternative package-manager lockfiles
+/package-lock.json
+
+# Local or unverified test data
+/apps/api/src/user/import-test-dataset.json
+
+# Local or unverified test data
+/apps/api/src/user/import-test-dataset.json

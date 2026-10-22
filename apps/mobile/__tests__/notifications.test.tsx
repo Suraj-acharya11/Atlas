@@ -42,6 +42,32 @@ describe('notification registration', () => {
     await expect(registerForPushNotifications(notifications, 'project-1', register)).rejects.toThrow('Registration failed');
   });
 
+  it('maps Firebase/FCM errors to fcm-unconfigured', async () => {
+    const notifications = {
+      requestPermissionsAsync: jest.fn().mockResolvedValue({ granted: true, status: 'granted' }),
+      getExpoPushTokenAsync: jest.fn().mockRejectedValue(new Error('FirebaseApp is not initialized in this process')),
+    };
+    const register = jest.fn();
+
+    await expect(registerForPushNotifications(notifications, 'project-1', register)).rejects.toMatchObject({
+      code: 'fcm-unconfigured',
+    });
+    expect(register).not.toHaveBeenCalled();
+  });
+
+  it('rejects when push token is missing in response', async () => {
+    const notifications = {
+      requestPermissionsAsync: jest.fn().mockResolvedValue({ granted: true, status: 'granted' }),
+      getExpoPushTokenAsync: jest.fn().mockResolvedValue({ data: '' }),
+    };
+    const register = jest.fn();
+
+    await expect(registerForPushNotifications(notifications, 'project-1', register)).rejects.toMatchObject({
+      code: 'missing-token',
+    });
+    expect(register).not.toHaveBeenCalled();
+  });
+
   it('prevents duplicate registration operations while the first is pending', async () => {
     const guard = createNotificationRegistrationGuard();
     let resolve: (value: string) => void = () => undefined;

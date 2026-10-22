@@ -6,8 +6,32 @@ describe('Reflection signal consumers', () => {
   it('passes the signal through KnowledgeService.evaluate()', async () => {
     const knowledge: any = { evaluate: jest.fn().mockResolvedValue(null) };
     await new KnowledgeReflectionSignalProcessor(knowledge).process({ data: { signalId: 's1', signal } } as any);
-    expect(knowledge.evaluate).toHaveBeenCalledWith({ userId: 'u1', payload: {} });
+    expect(knowledge.evaluate).toHaveBeenCalledWith({
+      userId: 'u1',
+      payload: {
+        knowledge: {
+          subject: 'user',
+          predicate: 'underestimates_duration',
+          object: 'task',
+          category: 'behavioral_pattern',
+          supports: false,
+        },
+      },
+    });
+    expect(knowledge.evaluate).toHaveBeenCalledWith({
+      userId: 'u1',
+      payload: {
+        knowledge: {
+          subject: 'user',
+          predicate: 'overestimates_duration',
+          object: 'task',
+          category: 'behavioral_pattern',
+          supports: false,
+        },
+      },
+    });
   });
+
   it('passes the signal to the ML training-data seam', async () => {
     const ml: any = { recordLearningSignal: jest.fn().mockResolvedValue(undefined) };
     await new MlReflectionSignalProcessor(ml).process({ data: { signalId: 's1', signal } } as any);

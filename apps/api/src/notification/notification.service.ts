@@ -1,8 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
+import { BadRequestException, Injectable, Optional } from '@nestjs/common';
+import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { InjectQueue } from '@nestjs/bullmq';
 import { ConfigService } from '@nestjs/config';
-import { Model, Types } from 'mongoose';
+import { Connection, Model, Types } from 'mongoose';
 import { Queue } from 'bullmq';
 import { ExpoPushClient } from './expo-push.client';
 import { DeviceToken, DeviceTokenDocument } from './schemas/device-token.schema';
@@ -19,6 +19,7 @@ export class NotificationService {
     @InjectQueue('notification-digest') private readonly digestQueue: Queue,
     private readonly push: ExpoPushClient,
     private readonly config: ConfigService,
+    @Optional() @InjectConnection() private readonly connection?: Connection,
   ) {}
 
   async onModuleInit(): Promise<void> {
@@ -65,6 +66,50 @@ export class NotificationService {
       flushed += 1;
     }
     return flushed;
+  }
+
+  async checkDeadlineNotifications(userId: string, conn?: Connection): Promise<void> {
+    const connection = conn ?? this.connection;
+    if (!connection) return;
+    if (!Types.ObjectId.isValid(userId)) return;
+    const userObjId = new Types.ObjectId(userId);
+
+    // Respect existing user notification preferences
+    const user = await connection.collection('users').findOne({ _id: userObjId });
+    if (user?.preferences) {
+      if (user.preferences.notificationsEnabled === false) return;
+      if (user.preferences.dailyReminders === false) return;
+    }
+
+    const now = new Date();
+    const todayEnd = new Date(now);
+    todayEnd.setHours(23, 59, 59, 999);
+
+    // Find tasks due today or overdue that are not completed/cancelled
+    const dueTasks = await connection.collection('tasks').find({
+      userId: userObjId,
+      status: { $in: ['todo', 'in_progress', 'paused'] },
+      deadline: { $lte: todayEnd },
+    }).limit(5).toArray();
+
+    if (dueTasks.length === 0) return;
+
+    const overdueCount = dueTasks.filter((t) => t.deadline && new Date(t.deadline as Date) < now).length;
+    const todayCount = dueTasks.length - overdueCount;
+
+    const parts: string[] = [];
+    if (overdueCount > 0) parts.push(`${overdueCount} overdue task${overdueCount > 1 ? 's' : ''}`);
+    if (todayCount > 0) parts.push(`${todayCount} task${todayCount > 1 ? 's' : ''} due today`);
+
+    const topTaskTitle = dueTasks[0]?.title as string ?? 'task';
+    const signal: MaterialChangeDetected = {
+      userId,
+      type: overdueCount > 0 ? MATERIAL_CHANGE_TYPES.taskOverdue : MATERIAL_CHANGE_TYPES.deadlineMovedCloser,
+      whatChanged: `You have ${parts.join(' and ')}.`,
+      recommendation: `Start with "${topTaskTitle}" — it's your most urgent item right now.`,
+      reason: `Daily deadline check: ${parts.join(', ')} requires attention.`,
+    };
+    await this.handleMaterialChange(signal);
   }
 
   private async deliver(notification: NotificationDocument, content: NotificationContent): Promise<void> {

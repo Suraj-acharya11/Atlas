@@ -6,6 +6,29 @@ import { colors, styles } from '../lib/theme';
 export function LoadingState() { return <View style={{ padding: 30, alignItems: 'center' }}><ActivityIndicator color={colors.violet} /><Text style={[styles.muted, { marginTop: 10 }]}>Loading ATLAS…</Text></View>; }
 export function ErrorState({ message, retry }: { message: string; retry: () => void }) { return <View style={styles.card}><Text style={styles.body}>Couldn’t load this section.</Text><Text style={[styles.muted, { marginTop: 6 }]}>{message}</Text><Pressable style={[styles.button, { marginTop: 14 }]} onPress={retry}><Text style={styles.buttonText}>Retry</Text></Pressable></View>; }
 export function StaleLabel({ visible }: { visible: boolean }) { return visible ? <Text style={{ color: colors.yellow, fontSize: 12, marginTop: 8 }}>Showing possibly stale data</Text> : null; }
+export function OfflineIndicator({ visible }: { visible: boolean }) {
+  if (!visible) return null;
+  return (
+    <View
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: colors.surface2,
+        borderColor: colors.border,
+        borderWidth: 1,
+        borderRadius: 8,
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        marginTop: 10,
+        alignSelf: 'flex-start',
+      }}>
+      <Text style={{ color: colors.yellow, fontSize: 10, marginRight: 6 }}>●</Text>
+      <Text style={{ color: colors.muted, fontSize: 12, fontWeight: '600' }}>
+        Offline — viewing saved data
+      </Text>
+    </View>
+  );
+}
 export function Header({ subtitle = 'AI LIFE OS' }: { subtitle?: string }) { return <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 18 }}><Text style={{ color: colors.violet, fontSize: 28, marginRight: 10 }}>◆</Text><View><Text style={{ color: colors.text, fontSize: 21, fontWeight: '900', letterSpacing: 5 }}>ATLAS</Text><Text style={{ color: colors.violetSoft, fontSize: 10, letterSpacing: 1.8 }}>{subtitle}</Text></View><View style={{ flex: 1 }} /><Pressable accessibilityRole="button" accessibilityLabel="Open account settings" onPress={() => router.push('/account')}><Text style={{ color: colors.text, fontSize: 22 }}>♧</Text></Pressable></View>; }
 const tabs = [{ href: '/(tabs)/dashboard', label: 'Dashboard', icon: '⌂' }, { href: '/(tabs)/plan', label: 'Plan', icon: '▣' }, { href: '/(tabs)/tasks', label: 'Tasks', icon: '✓' }, { href: '/(tabs)/reflection', label: 'Reflection', icon: '◎' }, { href: '/(tabs)/ai-chat', label: 'AI Chat', icon: '••' }] as const;
 export function BottomTabs() { const pathname = usePathname(); return <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 78, backgroundColor: colors.surface, borderTopColor: colors.border, borderTopWidth: 1, flexDirection: 'row', justifyContent: 'space-around', paddingTop: 10 }}>{tabs.map((tab) => { const active = pathname.includes(tab.label.toLowerCase().replace(' ', '-')); return <Link key={tab.href} href={tab.href} asChild><Pressable style={{ alignItems: 'center', minWidth: 54 }}><Text style={{ color: active ? colors.violet : colors.muted, fontSize: 23 }}>{tab.icon}</Text><Text style={{ color: active ? colors.violetSoft : colors.muted, fontSize: 10, marginTop: 3 }}>{tab.label}</Text></Pressable></Link>; })}</View>; }

@@ -1,0 +1,14 @@
+
+{
+  "name": "mobile-e2e",
+  "version": "1.0.0",
+  "description": "ATLAS Android automated UI tests",
+  "main": "atlas.test.js",
+  "scripts": {
+    "test": "mocha atlas.test.js --reporter mochawesome --reporter-options reportDir=reports,reportFilename=atlas-test-results,html=true,json=false"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}

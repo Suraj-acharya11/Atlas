@@ -44,8 +44,8 @@ export class DecisionService {
       confidenceLabel,
       missingInputs,
       priorityList,
-      topCandidateId: top?.candidateId ?? '',
-      topExplanation: top?.explanation ?? 'No eligible candidates are available.',
+      topCandidateId: top?.candidateId ?? null,
+      topExplanation: this.humanTopExplanation(top, enriched),
       warnings: this.warnings(enriched),
       suggestedFocusSession: top && !enriched.find((candidate) => candidate.id === top.candidateId)?.isRecovery ? { objective: top.title, durationMinutes: enriched.find((candidate) => candidate.id === top.candidateId)?.estimatedDurationMinutes ?? 25, expectedOutcome: top.title, recommendedBreakMinutes: 5 } : null,
       suggestedBreak: top && enriched.find((candidate) => candidate.id === top.candidateId)?.isRecovery ? { objective: top.title, durationMinutes: enriched.find((candidate) => candidate.id === top.candidateId)?.estimatedDurationMinutes ?? 10, expectedOutcome: 'Recover capacity before the next decision', recommendedBreakMinutes: 0 } : null,
@@ -66,7 +66,7 @@ export class DecisionService {
       const adjustmentResult = await this.ml.getAdjustment(item.candidate, context);
       // The ML branch is intentionally exercised even though V1 always returns unreliable output.
       const score = adjustmentResult.reliable ? deterministicScore + adjustmentResult.adjustment : deterministicScore;
-      scored.push({ candidateId: item.candidate.id, title: item.candidate.title, score, confidence: 0, confidenceLabel: 'low', explanation: '', factors });
+      scored.push({ candidateId: item.candidate.id, title: item.candidate.title, score, confidence: 0, confidenceLabel: 'low', explanation: '', factors, estimatedDurationMinutes: item.candidate.estimatedDurationMinutes ?? null });
     }
     scored.sort((a, b) => b.score - a.score);
     Object.defineProperty(scored, 'profile', { value: profile, enumerable: false });
@@ -79,6 +79,7 @@ export class DecisionService {
     return decision;
   }
   async getLatest(userId: string): Promise<DecisionDocument | null> {
+    if (!Types.ObjectId.isValid(userId)) return null;
     return this.model.findOne({ userId: new Types.ObjectId(userId) }).sort({ createdAt: -1 }).exec();
   }
 
@@ -100,7 +101,7 @@ export class DecisionService {
     const taskCandidates = tasks.filter((task: any) => !['completed', 'cancelled'].includes(task.status)).map((task: any) => {
       const project = task.projectId ? projectMap.get(task.projectId.toString()) : undefined;
       const activeGoalIds = (project?.goalIds ?? []).map((id: Types.ObjectId) => goalMap.get(id.toString())).filter((goal: any) => goal?.status === 'active').map((goal: any) => goal._id.toString());
-      return { id: task._id.toString(), title: task.title, projectId: task.projectId?.toString() ?? null, activeGoalIds, deadline: task.deadline, estimatedDurationMinutes: null, difficulty: null };
+      return { id: task._id.toString(), title: task.title, projectId: task.projectId?.toString() ?? null, activeGoalIds, deadline: task.deadline, estimatedDurationMinutes: task.estimatedDurationMinutes ?? null, difficulty: null };
     });
     return context.recoveryCandidate ? [...taskCandidates, context.recoveryCandidate] : taskCandidates;
   }
@@ -120,7 +121,24 @@ export class DecisionService {
     const tie = top && second && top.candidateId === item.candidateId && Math.abs(top.score - second.score) <= 5 ? ' Both are strong choices; this recommendation is only slightly ahead.' : '';
     return `Score ${item.score.toFixed(2)} from stored factors (${factors}); confidence: ${label}.${tie}`;
   }
+  private humanTopExplanation(top: DecisionCandidateResult | undefined, candidates: DecisionCandidate[]): string {
+    if (!top) return 'No eligible candidates are available.';
+    const topFactors = (top.factors ?? []).filter((f) => f.rawValue >= 40).sort((a, b) => b.rawValue - a.rawValue);
+    const reasons: string[] = [];
+    for (const f of topFactors) {
+      if (f.key === 'deadlineUrgency' && f.rawValue >= 60) reasons.push('an approaching deadline');
+      else if (f.key === 'goalImportance' && f.rawValue >= 40) reasons.push('alignment with your active goals');
+      else if (f.key === 'contextFit' && f.rawValue >= 40) reasons.push('your current schedule');
+      else if (f.key === 'energyFit' && f.rawValue >= 40) reasons.push('your focus capacity');
+      else if (f.key === 'knowledgeSupport' && f.rawValue >= 50) reasons.push('habits learned by ATLAS');
+    }
+    if (reasons.length > 0) {
+      return `Recommended based on ${reasons.slice(0, 2).join(' and ')}.`;
+    }
+    return 'Recommended based on your current priorities and roadmap.';
+  }
+
   private warnings(candidates: DecisionCandidate[]): string[] { return candidates.filter((candidate) => candidate.deadline && candidate.deadline.getTime() < Date.now() + 86_400_000).map((candidate) => `${candidate.title} has an approaching deadline.`); }
 }
 
-type DecisionCandidateResult = { candidateId: string; title: string; score: number; confidence: number; confidenceLabel: DecisionConfidenceLabel; explanation: string; factors: FactorBreakdown[] };
+type DecisionCandidateResult = { candidateId: string; title: string; score: number; confidence: number; confidenceLabel: DecisionConfidenceLabel; explanation: string; factors: FactorBreakdown[]; estimatedDurationMinutes?: number | null };

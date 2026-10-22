@@ -18,6 +18,7 @@ export class DecisionCandidateResult {
   @Prop({ required: true, enum: ['low', 'moderate', 'high'] }) confidenceLabel!: string;
   @Prop({ required: true }) explanation!: string;
   @Prop({ type: [DecisionFactorValue], required: true }) factors!: DecisionFactorValue[];
+  @Prop({ type: Number, default: null }) estimatedDurationMinutes?: number | null;
 }
 
 @Schema({ _id: false })
@@ -37,7 +38,7 @@ export class Decision {
   @Prop({ required: true, enum: ['low', 'moderate', 'high'] }) confidenceLabel!: string;
   @Prop({ type: [String], default: [] }) missingInputs!: string[];
   @Prop({ type: [DecisionCandidateResult], required: true }) priorityList!: DecisionCandidateResult[];
-  @Prop({ required: true }) topCandidateId!: string;
+  @Prop({ type: String, default: null }) topCandidateId!: string | null;
   @Prop({ required: true }) topExplanation!: string;
   @Prop({ type: [String], default: [] }) warnings!: string[];
   @Prop({ type: Object, default: null }) suggestedFocusSession!: Record<string, unknown> | null;

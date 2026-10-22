@@ -9,6 +9,8 @@ export class User {
   @Prop({ required: true, select: false }) passwordHash!: string;
   @Prop({ required: true, default: Date.now }) createdAt!: Date;
   @Prop({ required: true }) timezone!: string;
+  @Prop({ type: String, default: null }) displayName?: string | null;
+  @Prop({ type: String, default: null }) bio?: string | null;
   @Prop({ type: Object, default: {} }) preferences!: Record<string, unknown>;
 }
 

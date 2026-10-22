@@ -5,10 +5,10 @@ import { useReflections } from '../lib/queries';
 import type { Reflection as ReflectionSignal } from '../lib/types';
 
 jest.mock('../lib/queries', () => ({ useReflections: jest.fn() }));
-jest.mock('expo-router', () => ({ router: { push: jest.fn() } }));
+jest.mock('expo-router', () => ({ router: { push: jest.fn(), replace: jest.fn() } }));
 
 const useReflectionsMock = useReflections as jest.Mock;
-const router = jest.requireMock('expo-router').router as { push: jest.Mock };
+const router = jest.requireMock('expo-router').router as { push: jest.Mock; replace: jest.Mock };
 const signal: ReflectionSignal = {
   _id: 'signal-1',
   taskId: 'task-1',
@@ -54,9 +54,9 @@ describe('reflection screen', () => {
   it('does not pretend to submit a reflection and links to Focus instead', () => {
     useReflectionsMock.mockReturnValue(query([]));
     const screen = render(<Reflection />);
-    fireEvent.press(screen.getByText('Go to Focus'));
+    fireEvent.press(screen.getByText('Go to Today’s Mission & Focus'));
 
-    expect(router.push).toHaveBeenCalledWith('/(tabs)/dashboard');
+    expect(router.push).toHaveBeenCalledWith('/timetable');
   });
 
   it('uses the shared loading and error states', () => {
